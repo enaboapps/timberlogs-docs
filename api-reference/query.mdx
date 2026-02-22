@@ -1,0 +1,218 @@
+---
+title: Query Logs
+description: Retrieve logs from Timberlogs with filtering and pagination.
+---
+
+## List Logs
+
+**GET** `/v1/logs`
+
+### Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | number | 100 | Number of logs to return (max 1000) |
+| `offset` | number | 0 | Number of logs to skip |
+| `level` | string | - | Filter by log level |
+| `source` | string | - | Filter by source |
+| `environment` | string | - | Filter by environment |
+| `dataset` | string | - | Filter by dataset |
+| `userId` | string | - | Filter by user ID |
+| `sessionId` | string | - | Filter by session ID |
+| `flowId` | string | - | Filter by flow ID |
+| `from` | number | - | Start timestamp (Unix ms) |
+| `to` | number | - | End timestamp (Unix ms) |
+
+### Response
+
+```json
+{
+  "logs": [
+    {
+      "id": "log_abc123",
+      "timestamp": 1704067200000,
+      "level": "info",
+      "message": "User signed in",
+      "source": "api-server",
+      "environment": "production",
+      "userId": "user_123",
+      "sessionId": "sess_abc",
+      "data": {"method": "oauth"},
+      "tags": ["auth"]
+    }
+  ],
+  "pagination": {
+    "limit": 100,
+    "offset": 0,
+    "count": 50,
+    "hasMore": false
+  }
+}
+```
+
+### Examples
+
+**Basic query:**
+
+```bash
+curl -X GET "https://timberlogs-ingest.enaboapps.workers.dev/v1/logs" \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx"
+```
+
+**Filter by level:**
+
+```bash
+curl -X GET "https://timberlogs-ingest.enaboapps.workers.dev/v1/logs?level=error" \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx"
+```
+
+**Filter by source and environment:**
+
+```bash
+curl -X GET "https://timberlogs-ingest.enaboapps.workers.dev/v1/logs?source=api-server&environment=production" \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx"
+```
+
+**Filter by time range:**
+
+```bash
+curl -X GET "https://timberlogs-ingest.enaboapps.workers.dev/v1/logs?from=1704067200000&to=1704153600000" \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx"
+```
+
+**Filter by user:**
+
+```bash
+curl -X GET "https://timberlogs-ingest.enaboapps.workers.dev/v1/logs?userId=user_123" \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx"
+```
+
+**Filter by flow:**
+
+```bash
+curl -X GET "https://timberlogs-ingest.enaboapps.workers.dev/v1/logs?flowId=checkout-a1b2c3d4" \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx"
+```
+
+**Pagination:**
+
+```bash
+# First page
+curl -X GET "https://timberlogs-ingest.enaboapps.workers.dev/v1/logs?limit=50" \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx"
+
+# Second page
+curl -X GET "https://timberlogs-ingest.enaboapps.workers.dev/v1/logs?limit=50&offset=50" \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx"
+```
+
+## Get Single Log
+
+**GET** `/v1/logs/:id`
+
+Retrieve a single log by its ID.
+
+### Response
+
+```json
+{
+  "log": {
+    "id": "log_abc123",
+    "timestamp": 1704067200000,
+    "level": "info",
+    "message": "User signed in",
+    "source": "api-server",
+    "environment": "production",
+    "userId": "user_123",
+    "sessionId": "sess_abc",
+    "requestId": "req_xyz",
+    "data": {"method": "oauth"},
+    "tags": ["auth"],
+    "flowId": "login-x1y2z3",
+    "stepIndex": 0
+  }
+}
+```
+
+### Error Responses
+
+**401 Unauthorized** - Invalid or missing API key
+
+```json
+{
+  "error": "Invalid API key"
+}
+```
+
+**How to resolve:** Ensure your `Authorization` or `X-API-Key` header is included and valid. See [Authentication](/api-reference/authentication) for details.
+
+**404 Not Found** - Log not found
+
+```json
+{
+  "error": "Log not found"
+}
+```
+
+**How to resolve:** The log ID doesn't exist or belongs to a different organization. Verify the ID and ensure your API key has access to the correct organization.
+
+### Example
+
+```bash
+curl -X GET "https://timberlogs-ingest.enaboapps.workers.dev/v1/logs/log_abc123" \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx"
+```
+
+## Log Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique log identifier |
+| `timestamp` | number | Unix timestamp in milliseconds |
+| `level` | string | Log level: `debug`, `info`, `warn`, `error` |
+| `message` | string | Log message |
+| `source` | string | Application/service name |
+| `environment` | string | Environment name |
+| `dataset` | string | Dataset name |
+| `version` | string | Application version |
+| `userId` | string | User identifier |
+| `sessionId` | string | Session identifier |
+| `requestId` | string | Request identifier |
+| `data` | object | Additional structured data |
+| `errorName` | string | Error class/name |
+| `errorStack` | string | Error stack trace |
+| `tags` | string[] | Array of tags |
+| `country` | string | Country code (auto-detected) |
+| `ipAddress` | string | Client IP address |
+| `flowId` | string | Flow identifier |
+| `stepIndex` | number | Step index within flow |
+
+## Pagination
+
+The API uses offset-based pagination:
+
+- `limit` - Number of items per page (default: 100, max: 1000)
+- `offset` - Number of items to skip
+- `hasMore` - Boolean indicating if more results exist
+
+To iterate through all logs:
+
+```typescript
+let offset = 0
+const limit = 100
+let hasMore = true
+
+while (hasMore) {
+  const response = await fetch(
+    `https://timberlogs-ingest.enaboapps.workers.dev/v1/logs?limit=${limit}&offset=${offset}`,
+    { headers: { Authorization: `Bearer ${apiKey}` } }
+  )
+  const data = await response.json()
+
+  // Process data.logs
+  console.log(`Fetched ${data.logs.length} logs`)
+
+  hasMore = data.pagination.hasMore
+  offset += limit
+}
+```

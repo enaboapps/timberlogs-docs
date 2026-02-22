@@ -1,0 +1,70 @@
+---
+title: Structured Logging
+description: Capture log data as key-value fields rather than plain text strings for searchable, filterable, machine-readable logs.
+---
+
+Structured logging captures log data as key-value fields rather than plain text strings. Instead of embedding information in a message like `"User 123 placed order for $99.99"`, structured logging stores each piece of data separately — making logs searchable, filterable, and machine-readable.
+
+## Why Structured Logging?
+
+Plain text logs are easy to write but hard to work with at scale:
+
+```
+[2024-01-15 10:30:45] INFO: User 123 placed order for $99.99
+[2024-01-15 10:30:46] ERROR: Payment failed for user 456 on order ord_789
+```
+
+Finding all orders over $50, or all errors for a specific user, requires fragile text parsing. Structured logs solve this by storing data as discrete fields:
+
+```json
+{
+  "level": "info",
+  "message": "Order placed",
+  "source": "api-server",
+  "environment": "production",
+  "data": {
+    "userId": "user_123",
+    "orderId": "ord_abc",
+    "amount": 99.99
+  },
+  "tags": ["orders", "billing"]
+}
+```
+
+Now you can filter by `userId`, search by `level`, aggregate by `amount`, and alert on `tags` — without parsing text.
+
+## Key Fields
+
+Every Timberlogs entry has a standard set of fields:
+
+| Field | Description |
+|-------|-------------|
+| **message** | Human-readable description of the event |
+| **level** | Severity: `debug`, `info`, `warn`, or `error` |
+| **source** | Application or service name (e.g., `api-server`, `worker`) |
+| **environment** | Deployment target (e.g., `production`, `staging`) |
+| **data** | Arbitrary JSON object with event-specific details |
+| **tags** | Array of labels for categorization and filtering |
+| **timestamp** | When the event occurred |
+
+Additional optional fields include `userId`, `sessionId`, `requestId`, `flowId`, and `stepIndex` for correlation.
+
+## Structured Data Enables Analysis
+
+With structured fields, you can:
+
+- **Filter** logs by level, source, environment, or tags
+- **Search** within the `data` object for specific values
+- **Correlate** related events using `requestId`, `sessionId`, or `flowId`
+- **Aggregate** numeric fields for performance analysis
+- **Alert** on specific tag or level combinations
+
+## Datasets
+
+Datasets let you group and route logs by purpose. Set a `dataset` field on any log to organize logs into logical collections — for example, separating `billing` logs from `auth` logs. This is useful for access control, retention policies, and focused analysis.
+
+## Further Reading
+
+- [Log Levels](/concepts/log-levels) — severity hierarchy and when to use each level
+- [Flows](/concepts/flows) — grouping related logs across multi-step operations
+- SDK Logging Methods: [TypeScript](/sdks/typescript#logging-methods) | [Python](/sdks/python#logging-methods) — how to send structured logs from your application

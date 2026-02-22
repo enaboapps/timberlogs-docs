@@ -1,0 +1,72 @@
+---
+title: Error Reference
+description: A consolidated reference of all error responses across the Timberlogs API.
+---
+
+## Error Responses
+
+| Status | Error Message | Endpoint | Resolution |
+|--------|--------------|----------|------------|
+| 400 | Validation error | [POST /v1/logs](/api-reference/ingestion) | Check the `issues` array for details. Common causes: invalid `level` value, missing required fields, or exceeding the 100-log batch limit. |
+| 400 | Search query must be at least 2 characters | [GET /v1/logs/search](/api-reference/search) | The `q` parameter must be at least 2 characters long. Provide a longer search query. |
+| 401 | Missing API key | All endpoints | Include the `Authorization` or `X-API-Key` header in your request. See [Authentication](/api-reference/authentication). |
+| 401 | Invalid API key | All endpoints | Verify the key format (`tb_live_*` / `tb_test_*`) and that it was copied correctly. Generate a new key if needed. |
+| 401 | API key has been revoked | All endpoints | This key has been revoked. Create a new key in **Settings > API Keys**. |
+| 401 | API key has expired | All endpoints | This key has expired. Create a new key in **Settings > API Keys**. |
+| 403 | Access denied to organization | All endpoints | The API key does not have access to the specified organization. Verify the key belongs to the correct org. |
+| 403 | User has no organization | All endpoints | Create or join an organization in the [dashboard](https://app.timberlogs.dev). |
+| 404 | Log not found | [GET /v1/logs/:id](/api-reference/query) | The log ID doesn't exist or belongs to a different organization. Verify the ID and API key. |
+| 404 | Organization not found | All endpoints | Double-check the `organizationId` value in your request. |
+| 429 | Rate limit exceeded | [POST /v1/logs](/api-reference/ingestion) | Wait `retryAfter` seconds before retrying. Batch logs into fewer requests or upgrade your plan. |
+| 500 | Search failed | [GET /v1/logs/search](/api-reference/search) | Retry the request. If it persists, simplify the query or reduce search fields. |
+
+## Rate Limits by Plan
+
+| Plan | Requests/minute | Logs/month |
+|------|-----------------|------------|
+| Free | 60 | 10,000 |
+| Pro | 600 | 1,000,000 |
+| Enterprise | Unlimited | Custom |
+
+## Error Response Format
+
+All errors follow a consistent JSON format:
+
+```json
+{
+  "error": "Human-readable error message"
+}
+```
+
+Validation errors include additional detail:
+
+```json
+{
+  "error": "Validation error",
+  "issues": [
+    {
+      "path": ["logs", 0, "level"],
+      "message": "Invalid enum value"
+    }
+  ]
+}
+```
+
+Rate limit errors include a retry hint:
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "retryAfter": 60
+}
+```
+
+## Endpoint Reference
+
+For full details on each endpoint's error handling:
+
+- [Authentication](/api-reference/authentication) - 401, 403, 404 errors
+- [Log Ingestion](/api-reference/ingestion) - 400, 401, 429 errors
+- [Query Logs](/api-reference/query) - 401, 404 errors
+- [Search](/api-reference/search) - 400, 401, 500 errors
+- [Statistics](/api-reference/stats) - 401 errors

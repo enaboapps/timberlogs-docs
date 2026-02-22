@@ -1,0 +1,123 @@
+---
+title: Authentication
+description: API key authentication for the Timberlogs API.
+---
+
+Timberlogs uses API Keys for authentication.
+
+## API Keys
+
+API keys are the recommended method for server-side applications and SDKs.
+
+### Key Format
+
+API keys follow the format: `tb_{environment}_{random}`
+
+- `tb_live_*` - Production keys
+- `tb_test_*` - Test/development keys
+
+### Using API Keys
+
+Include your API key in the `Authorization` header:
+
+```bash
+curl -X POST https://timberlogs-ingest.enaboapps.workers.dev/v1/logs \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{"logs": [...]}'
+```
+
+Or use the `X-API-Key` header:
+
+```bash
+curl -X POST https://timberlogs-ingest.enaboapps.workers.dev/v1/logs \
+  -H "X-API-Key: tb_live_xxxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{"logs": [...]}'
+```
+
+### Creating API Keys
+
+1. Sign in to [app.timberlogs.dev](https://app.timberlogs.dev)
+2. Select your organization
+3. Navigate to **Settings > API Keys**
+4. Click **Create API Key**
+5. Store the key securely - it's only shown once
+
+### Key Security
+
+- Keys are hashed before storage (we never store the raw key)
+- Use environment variables to store keys in your applications
+- Rotate keys periodically
+- Revoke compromised keys immediately
+
+## Error Responses
+
+### 401 Unauthorized
+
+```json
+{
+  "error": "Missing API key"
+}
+```
+
+**How to resolve:** Check that the `Authorization` or `X-API-Key` header is included in your request.
+
+```json
+{
+  "error": "Invalid API key"
+}
+```
+
+**How to resolve:** Verify the key format (`tb_live_*` / `tb_test_*`) and that it was copied correctly. If in doubt, generate a new key in **Settings > API Keys**.
+
+```json
+{
+  "error": "API key has been revoked"
+}
+```
+
+**How to resolve:** This key has been revoked and can no longer be used. Create a new key in the dashboard under **Settings > API Keys**.
+
+```json
+{
+  "error": "API key has expired"
+}
+```
+
+**How to resolve:** This key has expired. Create a new key in the dashboard under **Settings > API Keys**.
+
+### 403 Forbidden
+
+```json
+{
+  "error": "Access denied to organization"
+}
+```
+
+**How to resolve:** The API key does not have access to the specified organization. Verify the key belongs to the correct organization.
+
+```json
+{
+  "error": "User has no organization"
+}
+```
+
+**How to resolve:** The account associated with this request has no organization. Create or join an organization in the dashboard.
+
+### 404 Not Found
+
+```json
+{
+  "error": "Organization not found"
+}
+```
+
+**How to resolve:** The organization ID doesn't exist. Double-check the `organizationId` value in your request.
+
+## Best Practices
+
+1. **Store keys securely** - Never commit API keys to version control
+2. **Use different keys per environment** - Separate test and production keys
+3. **Rotate keys regularly** - Especially after team changes
+4. **Revoke compromised keys immediately** - Generate a new key in the dashboard

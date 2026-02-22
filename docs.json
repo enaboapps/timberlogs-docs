@@ -1,0 +1,121 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Timberlogs",
+  "colors": {
+    "primary": "#22c55e",
+    "dark": "#16a34a",
+    "light": "#4ade80"
+  },
+  "logo": {
+    "light": "/images/logo-light.svg",
+    "dark": "/images/logo-dark.svg"
+  },
+  "favicon": "/images/favicon.svg",
+  "topbar": {
+    "style": "default"
+  },
+  "tabs": [
+    { "name": "Getting Started", "url": "/" },
+    { "name": "Concepts", "url": "concepts" },
+    { "name": "SDKs", "url": "sdks" },
+    { "name": "CLI", "url": "cli" },
+    { "name": "API Reference", "url": "api-reference" },
+    { "name": "Dashboard", "url": "dashboard" }
+  ],
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Getting Started",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": ["introduction", "getting-started"]
+          }
+        ]
+      },
+      {
+        "tab": "Concepts",
+        "groups": [
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/structured-logging",
+              "concepts/log-levels",
+              "concepts/flows"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "SDKs",
+        "groups": [
+          {
+            "group": "SDK Reference",
+            "pages": [
+              "sdks/typescript",
+              "sdks/python",
+              "sdks/configuration"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "CLI",
+        "groups": [
+          {
+            "group": "CLI",
+            "pages": ["cli/overview"]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "API",
+            "pages": [
+              "api-reference/authentication",
+              "api-reference/ingestion",
+              "api-reference/query",
+              "api-reference/search",
+              "api-reference/stats",
+              "api-reference/errors"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Dashboard",
+        "groups": [
+          {
+            "group": "Dashboard",
+            "pages": [
+              "dashboard/overview",
+              "dashboard/ai-assistant",
+              "dashboard/logs",
+              "dashboard/flows"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "topbarLinks": [
+    {
+      "name": "Dashboard",
+      "url": "https://app.timberlogs.dev"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Sign Up Free",
+    "url": "https://app.timberlogs.dev"
+  },
+  "footerSocials": {
+    "website": "https://timberlogs.dev",
+    "github": "https://github.com/enaboapps"
+  },
+  "feedback": {
+    "thumbsRating": true
+  }
+}

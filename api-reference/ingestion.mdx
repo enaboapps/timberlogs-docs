@@ -1,0 +1,470 @@
+---
+title: Log Ingestion
+description: Send logs to Timberlogs via the ingestion API. Supports JSON, JSONL, syslog, plain text, CSV, and OBL formats.
+---
+
+## Endpoint
+
+**POST** `/v1/logs`
+
+**Base URL:** `https://timberlogs-ingest.enaboapps.workers.dev`
+
+## Supported Formats
+
+The ingestion endpoint accepts logs in multiple formats. Format is resolved by priority:
+
+1. **`?format=` query parameter** (highest priority)
+2. **`Content-Type` header**
+3. **Auto-detection** via content sniffing (fallback)
+
+| Format | Content-Type | `?format=` | Description |
+|--------|-------------|------------|-------------|
+| JSON | `application/json` | `json` | Default. `{ logs: [...] }`, bare array, or single object |
+| JSONL | `application/x-ndjson` | `jsonl` | One JSON object per line |
+| Syslog | `application/x-syslog` | `syslog` | RFC 5424 and RFC 3164 |
+| Text | `text/plain` | `text` | One log per line, auto-extracts timestamp and level |
+| CSV | `text/csv` | `csv` | Header row with field names, comma or tab delimited |
+| OBL | `application/x-obl` | `obl` | Open Board Logging format for AAC device logs |
+
+## Request
+
+### Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Authorization` | Yes | `Bearer <api-key>` |
+| `Content-Type` | No | Format hint (see table above). Defaults to `application/json` |
+
+### Query Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `format` | Explicit format override: `json`, `jsonl`, `syslog`, `text`, `csv`, `obl` |
+| `source` | Default `source` for logs that don't include one |
+| `environment` | Default `environment` for logs that don't include one |
+| `level` | Default `level` for logs that don't include one |
+| `dataset` | Default `dataset` for logs that don't include one |
+
+Default query parameters are useful for formats like plain text and syslog where `source` and `environment` may not be present in the log data.
+
+### Body (JSON)
+
+```json
+{
+  "logs": [
+    {
+      "level": "info",
+      "message": "User signed in",
+      "source": "api-server",
+      "environment": "production",
+      "data": {
+        "userId": "user_123"
+      }
+    }
+  ]
+}
+```
+
+The JSON parser also accepts a bare array `[...]` or a single object `{...}`.
+
+### Body (JSONL)
+
+```
+{"level":"error","message":"Connection refused","source":"api","environment":"production"}
+{"level":"info","message":"Request completed","source":"api","environment":"production"}
+```
+
+One JSON object per line. Empty lines are skipped.
+
+### Body (Syslog)
+
+**RFC 5424:**
+```
+<165>1 2024-01-15T10:30:00.000Z myhost api 1234 - - Connection refused
+```
+
+**RFC 3164:**
+```
+<34>Jan 15 10:30:00 myhost api[1234]: Connection refused
+```
+
+Syslog severity is mapped to log levels: emergency/alert/critical/error → `error`, warning → `warn`, notice/info → `info`, debug → `debug`. The APP-NAME or TAG becomes `source`, and HOSTNAME/PROCID are stored in `data`.
+
+### Body (Plain Text)
+
+```
+2024-01-15 10:30:00 ERROR Connection refused to database
+2024-01-15 10:30:01 INFO Retrying connection...
+```
+
+One log per line. The parser extracts timestamps (ISO 8601, `YYYY-MM-DD HH:MM:SS`, `MM/DD/YYYY HH:MM:SS`) and level keywords (`ERROR`, `WARN`, `WARNING`, `INFO`, `DEBUG`, case-insensitive). Use `?source=` and `?environment=` query params to set required fields.
+
+### Body (CSV)
+
+```csv
+level,message,source,timestamp
+error,Connection refused,api,1705312200000
+info,Request completed,api,1705312201000
+```
+
+First row is the header. Column names must match log schema field names. Tab-delimited files are also accepted (auto-detected). Quoted fields with commas are supported.
+
+### Body (OBL)
+
+```json
+{
+  "format": "open-board-log-0.1",
+  "user_id": "user_abc",
+  "source": "my-aac-app",
+  "sessions": [
+    {
+      "id": "sess_1",
+      "type": "log",
+      "started": "2024-01-15T10:00:00Z",
+      "ended": "2024-01-15T11:00:00Z",
+      "events": [
+        {
+          "id": "e1",
+          "timestamp": "2024-01-15T10:05:00Z",
+          "type": "button",
+          "label": "hello",
+          "spoken": true
+        },
+        {
+          "id": "e2",
+          "timestamp": "2024-01-15T10:06:00Z",
+          "type": "utterance",
+          "text": "hello world"
+        }
+      ]
+    }
+  ]
+}
+```
+
+[Open Board Logging (.obl)](https://www.openboardformat.org/) is a standard format for AAC (Augmentative and Alternative Communication) device logs. Each event in each session becomes a separate log entry. Event types are `button`, `utterance`, `action`, and `note`.
+
+**Event mapping:**
+- **button** → message: `Button: {label}`, data includes `spoken`, `button_id`, `board_id`
+- **utterance** → message: `Utterance: {text}`, data includes constituent `buttons`
+- **action** → message: `Action: {action}`, data includes `destination_board_id`, `text`
+- **note** → message: `Note: {text}`, data includes `author_name`
+
+The OBL `user_id` maps to `userId`, `device_id` maps to `sessionId`, and session/event metadata is stored in `data`. The root `source` field is used as the log source. Use `?source=` and `?environment=` query params to set defaults. Files may start with a `/* ... */` comment block which is stripped before parsing. Auto-detection works by checking for `"open-board-log-"` in the JSON.
+
+### Log Entry Schema
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `level` | string | Yes | Log level: `debug`, `info`, `warn`, `error` |
+| `message` | string | Yes | Log message (1-10,000 characters) |
+| `source` | string | Yes | Application/service name (1-100 characters) |
+| `environment` | string | Yes | `development`, `staging`, or `production` |
+| `dataset` | string | No | Dataset name for grouping (default: `default`) |
+| `version` | string | No | Application version |
+| `userId` | string | No | User identifier |
+| `sessionId` | string | No | Session identifier |
+| `requestId` | string | No | Request identifier for correlation |
+| `data` | object | No | Arbitrary JSON data |
+| `errorName` | string | No | Error class/name |
+| `errorStack` | string | No | Error stack trace |
+| `tags` | string[] | No | Array of tags (max 20 tags, 50 chars each) |
+| `timestamp` | number | No | Unix timestamp in milliseconds |
+| `flowId` | string | No | Flow identifier for grouping related logs |
+| `stepIndex` | number | No | Step index within a flow (0-1000) |
+
+Required fields can be provided via query parameter defaults when using non-JSON formats.
+
+### Batch Limits
+
+- Minimum: 1 log per request
+- Maximum: 100 logs per request
+
+## Response
+
+### Success (200)
+
+```json
+{
+  "success": true,
+  "count": 5,
+  "timestamp": 1704067200000
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Always `true` on success |
+| `count` | number | Number of logs ingested |
+| `timestamp` | number | Server timestamp of ingestion |
+
+### Error Responses
+
+**400 Bad Request** - Invalid request body or parse error
+
+```json
+{
+  "error": "Failed to parse line 3: invalid JSON",
+  "code": "PARSE_ERROR"
+}
+```
+
+**How to resolve:** Check the error message for details. For JSONL, the line number is included. For JSON, check the `issues` array. Common causes: invalid `level` enum value, missing required fields, malformed input, or exceeding the 100-log batch limit.
+
+**401 Unauthorized** - Invalid or missing API key
+
+```json
+{
+  "error": "Invalid API key"
+}
+```
+
+**How to resolve:** See [Authentication](/api-reference/authentication) for details on API key format and usage.
+
+**429 Too Many Requests** - Rate limit exceeded
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "retryAfter": 60
+}
+```
+
+**How to resolve:** Wait `retryAfter` seconds before retrying. Consider batching logs into fewer requests or upgrading your plan.
+
+## Examples
+
+### Basic Log (JSON)
+
+```bash
+curl -X POST https://timberlogs-ingest.enaboapps.workers.dev/v1/logs \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "logs": [{
+      "level": "info",
+      "message": "Application started",
+      "source": "my-app",
+      "environment": "production"
+    }]
+  }'
+```
+
+### JSONL
+
+```bash
+curl -X POST https://timberlogs-ingest.enaboapps.workers.dev/v1/logs \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx" \
+  -H "Content-Type: application/x-ndjson" \
+  -d '{"level":"error","message":"Connection refused","source":"api","environment":"production"}
+{"level":"info","message":"Request completed","source":"api","environment":"production"}'
+```
+
+### Syslog
+
+```bash
+curl -X POST 'https://timberlogs-ingest.enaboapps.workers.dev/v1/logs?format=syslog&environment=production' \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx" \
+  -d '<165>1 2024-01-15T10:30:00.000Z myhost api 1234 - - Connection refused
+<14>1 2024-01-15T10:30:01.000Z myhost api 1234 - - Retrying connection'
+```
+
+### Plain Text
+
+```bash
+curl -X POST 'https://timberlogs-ingest.enaboapps.workers.dev/v1/logs?source=nginx&environment=production' \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx" \
+  -H "Content-Type: text/plain" \
+  -d '2024-01-15 10:30:00 ERROR Connection refused to database
+2024-01-15 10:30:01 INFO Retrying connection...'
+```
+
+### CSV
+
+```bash
+curl -X POST 'https://timberlogs-ingest.enaboapps.workers.dev/v1/logs?environment=production' \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx" \
+  -H "Content-Type: text/csv" \
+  -d 'level,message,source,timestamp
+error,Connection refused,api,1705312200000
+info,Request completed,api,1705312201000'
+```
+
+### OBL (AAC Device Logs)
+
+```bash
+curl -X POST 'https://timberlogs-ingest.enaboapps.workers.dev/v1/logs?source=my-aac-app&environment=production' \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx" \
+  -H "Content-Type: application/x-obl" \
+  -d '{
+    "format": "open-board-log-0.1",
+    "user_id": "user_abc",
+    "sessions": [{
+      "id": "sess_1",
+      "type": "log",
+      "started": "2024-01-15T10:00:00Z",
+      "ended": "2024-01-15T11:00:00Z",
+      "events": [
+        {"id": "e1", "timestamp": "2024-01-15T10:05:00Z", "type": "button", "label": "I", "spoken": true},
+        {"id": "e2", "timestamp": "2024-01-15T10:05:01Z", "type": "button", "label": "want", "spoken": true},
+        {"id": "e3", "timestamp": "2024-01-15T10:05:02Z", "type": "utterance", "text": "I want juice"}
+      ]
+    }]
+  }'
+```
+
+### Log with Data
+
+```bash
+curl -X POST https://timberlogs-ingest.enaboapps.workers.dev/v1/logs \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "logs": [{
+      "level": "info",
+      "message": "User signed in",
+      "source": "auth-service",
+      "environment": "production",
+      "userId": "user_123",
+      "sessionId": "sess_abc",
+      "data": {
+        "method": "oauth",
+        "provider": "google"
+      },
+      "tags": ["auth", "login"]
+    }]
+  }'
+```
+
+### Error Log
+
+```bash
+curl -X POST https://timberlogs-ingest.enaboapps.workers.dev/v1/logs \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "logs": [{
+      "level": "error",
+      "message": "Database connection failed",
+      "source": "api-server",
+      "environment": "production",
+      "errorName": "ConnectionError",
+      "errorStack": "ConnectionError: ECONNREFUSED\n    at connect (/app/db.js:42:11)\n    at ...",
+      "tags": ["database", "critical"]
+    }]
+  }'
+```
+
+### Batch Logs
+
+```bash
+curl -X POST https://timberlogs-ingest.enaboapps.workers.dev/v1/logs \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "logs": [
+      {
+        "level": "info",
+        "message": "Request received",
+        "source": "api",
+        "environment": "production",
+        "requestId": "req_xyz"
+      },
+      {
+        "level": "debug",
+        "message": "Processing request",
+        "source": "api",
+        "environment": "production",
+        "requestId": "req_xyz"
+      },
+      {
+        "level": "info",
+        "message": "Request completed",
+        "source": "api",
+        "environment": "production",
+        "requestId": "req_xyz",
+        "data": {"duration": 145}
+      }
+    ]
+  }'
+```
+
+### Flow Tracking
+
+```bash
+curl -X POST https://timberlogs-ingest.enaboapps.workers.dev/v1/logs \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "logs": [
+      {
+        "level": "info",
+        "message": "Checkout started",
+        "source": "checkout-service",
+        "environment": "production",
+        "flowId": "checkout-a1b2c3d4",
+        "stepIndex": 0
+      },
+      {
+        "level": "info",
+        "message": "Payment processed",
+        "source": "checkout-service",
+        "environment": "production",
+        "flowId": "checkout-a1b2c3d4",
+        "stepIndex": 1
+      }
+    ]
+  }'
+```
+
+## Raw Ingestion via SDK
+
+The TypeScript and Python SDKs provide `ingestRaw()` / `ingest_raw()` methods that send pre-formatted data directly to this endpoint. The SDK handles Content-Type headers, query parameter encoding, and retry logic automatically.
+
+<CodeGroup>
+```typescript TypeScript
+await timber.ingestRaw(body, 'csv', { source: 'nginx', environment: 'production' })
+```
+
+```python Python
+# Sync
+timber.ingest_raw(body, "csv", IngestRawOptions(source="nginx", environment="production"))
+
+# Async
+await timber.ingest_raw_async(body, "csv", IngestRawOptions(source="nginx", environment="production"))
+```
+</CodeGroup>
+
+This is equivalent to:
+
+```bash
+curl -X POST 'https://timberlogs-ingest.enaboapps.workers.dev/v1/logs?format=csv&source=nginx&environment=production' \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx" \
+  -H "Content-Type: text/csv" \
+  -d "$body"
+```
+
+See the [TypeScript SDK](/sdks/typescript#raw-format-ingestion) and [Python SDK](/sdks/python#raw-format-ingestion) docs for full details.
+
+## Rate Limits
+
+Rate limits depend on your plan:
+
+| Plan | Requests/minute | Logs/month |
+|------|-----------------|------------|
+| Free | 60 | 10,000 |
+| Pro | 600 | 1,000,000 |
+| Enterprise | Unlimited | Custom |
+
+When rate limited, you'll receive a `429` response with a `retryAfter` value indicating when to retry.
+
+## Best Practices
+
+1. **Batch logs** - Send multiple logs per request to reduce overhead
+2. **Use the SDK** - The TypeScript and Python SDKs handle batching and retries automatically
+3. **Include context** - Add `userId`, `sessionId`, and `requestId` for correlation
+4. **Use structured data** - Put details in `data` rather than interpolating into `message`
+5. **Tag appropriately** - Use consistent tags for filtering
+6. **Handle errors** - Implement retry logic with exponential backoff
+7. **Use explicit formats** - Prefer `?format=` or `Content-Type` over auto-detection for reliability
+8. **Set defaults for non-JSON formats** - Use `?source=` and `?environment=` query params when sending plain text or syslog

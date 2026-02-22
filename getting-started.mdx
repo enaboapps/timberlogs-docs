@@ -1,0 +1,257 @@
+---
+title: Getting Started
+description: Get up and running with Timberlogs in under 5 minutes.
+---
+
+## Installation
+
+Install the Timberlogs SDK using your preferred package manager.
+
+### TypeScript / JavaScript
+
+<CodeGroup>
+```bash npm
+npm install timberlogs-client
+```
+
+```bash pnpm
+pnpm add timberlogs-client
+```
+
+```bash yarn
+yarn add timberlogs-client
+```
+</CodeGroup>
+
+**Requirements:** Node.js 16 or later. TypeScript 4.7+ optional but recommended.
+
+### Python
+
+<CodeGroup>
+```bash pip
+pip install timberlogs-client
+```
+
+```bash uv
+uv add timberlogs-client
+```
+
+```bash poetry
+poetry add timberlogs-client
+```
+</CodeGroup>
+
+**Requirements:** Python 3.8 or later.
+
+<Steps>
+
+<Step title="Get Your API Key">
+Sign up at [app.timberlogs.dev](https://app.timberlogs.dev) and create an organization. Navigate to **Settings > API Keys** and create a new key.
+
+Your API key will look like: `tb_live_xxxxxxxxxxxxx`
+</Step>
+
+<Step title="Initialize the Client">
+
+<CodeGroup>
+```typescript TypeScript
+import { createTimberlogs } from 'timberlogs-client'
+
+const timber = createTimberlogs({
+  source: 'my-app',           // Your app/service name
+  environment: 'production',   // development, staging, or production
+  apiKey: process.env.TIMBER_API_KEY,
+})
+```
+
+```python Python
+import os
+from timberlogs import create_timberlogs
+
+timber = create_timberlogs(
+    source="my-app",
+    environment="production",
+    api_key=os.getenv("TIMBER_API_KEY"),
+)
+```
+</CodeGroup>
+
+</Step>
+
+<Step title="Send Your First Log">
+
+<CodeGroup>
+```typescript TypeScript
+// Simple info log
+timber.info('Application started')
+
+// Log with data
+timber.info('User signed in', {
+  userId: 'user_123',
+  email: 'user@example.com'
+})
+
+// Log a warning
+timber.warn('Rate limit approaching', {
+  current: 950,
+  limit: 1000
+})
+
+// Log an error with stack trace
+try {
+  await riskyOperation()
+} catch (error) {
+  timber.error('Operation failed', error)
+}
+```
+
+```python Python
+# Simple info log
+timber.info("Application started")
+
+# Log with data
+timber.info("User signed in", {
+    "user_id": "user_123",
+    "email": "user@example.com"
+})
+
+# Log a warning
+timber.warn("Rate limit approaching", {
+    "current": 950,
+    "limit": 1000
+})
+
+# Log an error with stack trace
+try:
+    risky_operation()
+except Exception as e:
+    timber.error("Operation failed", e)
+```
+</CodeGroup>
+
+</Step>
+
+<Step title="View in Dashboard">
+Head to [app.timberlogs.dev](https://app.timberlogs.dev) and select your organization. Your logs will appear in the Logs view within seconds.
+</Step>
+
+<Step title="Flush on Exit (Important!)">
+
+The SDK batches logs for efficiency. Make sure to flush before your process exits:
+
+<CodeGroup>
+```typescript TypeScript
+// Before shutdown
+await timber.flush()
+
+// Or use disconnect which flushes automatically
+await timber.disconnect()
+```
+
+```python Python
+# Before shutdown
+timber.flush()
+
+# Or use disconnect which flushes automatically
+timber.disconnect()
+
+# Or use a context manager for automatic cleanup
+with create_timberlogs(...) as timber:
+    timber.info("Auto-flushed on exit")
+```
+</CodeGroup>
+
+</Step>
+
+</Steps>
+
+## Example: Express.js
+
+```typescript
+import express from 'express'
+import { createTimberlogs } from 'timberlogs-client'
+
+const app = express()
+const timber = createTimberlogs({
+  source: 'api-server',
+  environment: process.env.NODE_ENV || 'development',
+  apiKey: process.env.TIMBER_API_KEY,
+})
+
+app.use((req, res, next) => {
+  timber.info('Request received', {
+    method: req.method,
+    path: req.path,
+    ip: req.ip,
+  })
+  next()
+})
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' })
+})
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  await timber.flush()
+  process.exit(0)
+})
+
+app.listen(3000)
+```
+
+## Example: FastAPI
+
+```python
+import os
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request
+from timberlogs import create_timberlogs
+
+timber = create_timberlogs(
+    source="api-server",
+    environment=os.getenv("ENVIRONMENT", "development"),
+    api_key=os.getenv("TIMBER_API_KEY"),
+)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    timber.disconnect()
+
+app = FastAPI(lifespan=lifespan)
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    timber.info("Request received", {
+        "method": request.method,
+        "path": request.url.path,
+        "ip": request.client.host,
+    })
+    return await call_next(request)
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+```
+
+## Query Logs from the Terminal
+
+Install the [Timberlogs CLI](/cli/overview) to search and filter logs without leaving your terminal:
+
+```bash
+npm install -g timberlogs-cli
+timberlogs login
+timberlogs logs --level error --from 1h
+```
+
+## Next Steps
+
+- Learn about all [configuration options](/sdks/configuration)
+- Explore the SDK reference: [TypeScript](/sdks/typescript) | [Python](/sdks/python)
+- Query logs from the terminal with the [CLI](/cli/overview)
+- Track user flows with [Flow Tracking](/concepts/flows)
+
+<Tip>
+Ready to start logging? [Sign up free](https://app.timberlogs.dev) — send your first log in under 5 minutes.
+</Tip>

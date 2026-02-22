@@ -1,0 +1,97 @@
+---
+title: Flows
+description: Group related logs together and track their sequence across multi-step operations.
+---
+
+Flows group related logs together and track their sequence across a multi-step operation. Instead of searching through thousands of logs to piece together what happened during a checkout or a background job, a flow connects all the relevant logs with a shared identifier and ordered step indices.
+
+## Why Flows?
+
+In any non-trivial application, a single user action triggers multiple log events across different functions, services, or even machines. Without flows, correlating these events means manually matching timestamps, user IDs, or request IDs — which breaks down quickly.
+
+Flows solve this by giving each operation a unique `flowId` and automatically numbering each step, so you get a complete, ordered timeline of what happened.
+
+## Flow Anatomy
+
+Every log in a flow carries two extra fields:
+
+| Field | Description |
+|-------|-------------|
+| **flowId** | Unique identifier linking all logs in the flow (e.g., `checkout-a1b2c3d4`) |
+| **stepIndex** | Auto-incrementing position in the sequence (0, 1, 2, ...) |
+
+The flow also has a **name** — the human-readable prefix of the flow ID (e.g., `checkout` from `checkout-a1b2c3d4`).
+
+## Flow ID Generation
+
+Flow IDs follow the pattern `{name}-{random8chars}`:
+
+```
+checkout-a1b2c3d4
+user-onboarding-x7y8z9ab
+api-request-mn0p1q2r
+```
+
+The suffix uses cryptographically secure random values to ensure uniqueness.
+
+## Use Cases
+
+Flows are ideal for tracking:
+
+- **Checkout processes** — cart validation, payment, order creation, confirmation
+- **API request lifecycles** — receive, authenticate, process, respond
+- **Background jobs** — start, process items, complete or fail
+- **User journeys** — sign-up, onboarding steps, activation
+- **Data pipelines** — ingest, transform, validate, store
+
+## Step Indexing
+
+Each log in a flow automatically receives an incrementing `stepIndex`, starting at 0. This preserves the order of operations regardless of when logs arrive at the server.
+
+### Level Filtering Behavior
+
+When `minLevel` is configured, filtered logs do **not** increment the step index:
+
+```
+flow.debug('Not sent')      // Filtered out, stepIndex not incremented
+flow.info('First log')      // stepIndex: 0
+flow.debug('Not sent')      // Filtered out, stepIndex not incremented
+flow.info('Second log')     // stepIndex: 1
+```
+
+This ensures step indices remain sequential without gaps, even when some log levels are suppressed.
+
+## Cross-Service Correlation
+
+Flows can span multiple services by passing the `flowId` between them. For example, an API server can start a flow and pass the flow ID to a background worker via a job queue. The worker then logs with the same `flowId`, continuing the sequence. This gives you a unified timeline across service boundaries.
+
+## Best Practices
+
+### Name Flows Descriptively
+
+Use names that clearly describe the operation:
+
+```
+checkout              ✓
+user-registration     ✓
+payment-processing    ✓
+flow1                 ✗
+process               ✗
+```
+
+### Include Context in the First Log
+
+The first log in a flow should capture the key identifiers and parameters for the operation — user ID, order ID, item count, etc. This makes it easy to find and understand the flow later.
+
+### Log Completion
+
+Always log the outcome of a flow, whether it succeeds or fails. This makes it clear whether a flow completed normally or was interrupted.
+
+### Keep Flows Focused
+
+Each flow should represent a single logical operation. If an operation triggers sub-operations, consider creating separate flows for each rather than nesting everything in one.
+
+## Further Reading
+
+- SDK Flow Tracking: [TypeScript](/sdks/typescript#flow-tracking) | [Python](/sdks/python#flow-tracking) — how to create and use flows in code
+- [Flow Timeline](/dashboard/flows) — viewing and analyzing flows in the dashboard

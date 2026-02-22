@@ -1,0 +1,203 @@
+---
+title: Search
+description: Full-text search across your logs with advanced query syntax.
+---
+
+## Endpoint
+
+**GET** `/v1/logs/search`
+
+## Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `q` | string | Required | Search query (min 2 characters) |
+| `fields` | string | `message` | Comma-separated fields to search |
+| `limit` | number | 50 | Number of results (max 500) |
+| `offset` | number | 0 | Results to skip |
+| `level` | string | - | Filter by log level |
+| `source` | string | - | Filter by source |
+| `environment` | string | - | Filter by environment |
+| `dataset` | string | - | Filter by dataset |
+| `from` | number | - | Start timestamp (Unix ms) |
+| `to` | number | - | End timestamp (Unix ms) |
+
+### Searchable Fields
+
+- `message` - Log message (default)
+- `errorName` - Error class/name
+- `errorStack` - Error stack trace
+- `data` - JSON data field
+
+## Search Syntax
+
+### Basic Search
+
+Simple word search (case-insensitive):
+
+```
+payment
+```
+
+### Multiple Terms (AND)
+
+All terms must be present:
+
+```
+payment failed
+```
+
+### Phrase Search
+
+Match exact phrase:
+
+```
+"payment failed"
+```
+
+### OR Search
+
+Match any of the terms:
+
+```
+payment OR checkout
+```
+
+### Exclude Terms
+
+Exclude logs containing a term:
+
+```
+payment -refund
+```
+
+### Combined
+
+```
+"payment failed" error -test
+```
+
+## Response
+
+```json
+{
+  "logs": [
+    {
+      "id": "log_abc123",
+      "timestamp": 1704067200000,
+      "level": "error",
+      "message": "Payment failed: insufficient funds",
+      "source": "payment-service",
+      "environment": "production"
+    }
+  ],
+  "query": {
+    "raw": "payment failed",
+    "parsed": {
+      "required": ["payment", "failed"],
+      "phrases": [],
+      "excluded": [],
+      "optional": []
+    },
+    "fields": ["message"]
+  },
+  "pagination": {
+    "limit": 50,
+    "offset": 0,
+    "count": 15,
+    "hasMore": false
+  }
+}
+```
+
+## Examples
+
+### Basic Search
+
+```bash
+curl -X GET "https://timberlogs-ingest.enaboapps.workers.dev/v1/logs/search?q=error" \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx"
+```
+
+### Search Specific Fields
+
+```bash
+curl -X GET "https://timberlogs-ingest.enaboapps.workers.dev/v1/logs/search?q=timeout&fields=message,errorStack" \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx"
+```
+
+### Phrase Search
+
+```bash
+curl -X GET "https://timberlogs-ingest.enaboapps.workers.dev/v1/logs/search?q=%22database%20connection%22" \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx"
+```
+
+### Exclude Terms
+
+```bash
+curl -X GET "https://timberlogs-ingest.enaboapps.workers.dev/v1/logs/search?q=error%20-debug" \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx"
+```
+
+### Combined Filters
+
+```bash
+curl -X GET "https://timberlogs-ingest.enaboapps.workers.dev/v1/logs/search?q=payment&level=error&source=payment-service&environment=production" \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx"
+```
+
+### Time Range
+
+```bash
+curl -X GET "https://timberlogs-ingest.enaboapps.workers.dev/v1/logs/search?q=timeout&from=1704067200000&to=1704153600000" \
+  -H "Authorization: Bearer tb_live_xxxxxxxxxxxxx"
+```
+
+## Error Responses
+
+**401 Unauthorized** - Invalid or missing API key
+
+```json
+{
+  "error": "Invalid API key"
+}
+```
+
+**How to resolve:** Ensure your `Authorization` or `X-API-Key` header is included and valid. See [Authentication](/api-reference/authentication) for details.
+
+**400 Bad Request** - Invalid query
+
+```json
+{
+  "error": "Search query must be at least 2 characters"
+}
+```
+
+**How to resolve:** The `q` parameter must be at least 2 characters long. Provide a longer search query.
+
+**500 Internal Server Error:**
+
+```json
+{
+  "error": "Search failed"
+}
+```
+
+**How to resolve:** Retry the request. If the error persists, try simplifying the query or reducing the number of search fields.
+
+## Search Tips
+
+1. **Start specific** - Use specific terms to narrow results
+2. **Use phrases** - Wrap multi-word searches in quotes for exact matches
+3. **Exclude noise** - Use `-term` to filter out irrelevant results
+4. **Search errors** - Add `errorStack` to fields when debugging exceptions
+5. **Combine with filters** - Use `level=error` to focus on errors only
+6. **Time scope** - Use `from`/`to` to search specific time periods
+
+## Performance
+
+- Search defaults to the `message` field for best performance
+- Adding more fields (especially `data`) increases query time
+- Use filters (`level`, `source`, etc.) to reduce the search space
+- For large result sets, use pagination with reasonable limits

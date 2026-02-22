@@ -1,0 +1,87 @@
+---
+title: Log Levels
+description: Understanding log level severity hierarchy and when to use each level in Timberlogs.
+---
+
+Log levels indicate the severity of an event. Timberlogs supports four levels, ordered from least to most severe:
+
+```
+debug < info < warn < error
+```
+
+## Severity Hierarchy
+
+| Level | Purpose | Example |
+|-------|---------|---------|
+| `debug` | Detailed diagnostic information for development and troubleshooting | SQL queries, cache lookups, internal state |
+| `info` | Normal operational events and business milestones | User sign-ins, orders placed, jobs completed |
+| `warn` | Potential issues that don't block execution but need attention | Rate limits approaching, deprecated API usage, retry attempts |
+| `error` | Failures that require immediate investigation | Database connection failures, payment processing errors, unhandled exceptions |
+
+## When to Use Each Level
+
+### debug
+
+Use for information only needed during active debugging. These logs are typically high-volume and disabled in production:
+
+- Database query details and timing
+- Cache hit/miss events
+- Internal function entry/exit
+- Configuration values at startup
+
+### info
+
+Use for events that confirm the system is working correctly. These form the baseline of operational visibility:
+
+- User actions (sign-in, sign-out, purchase)
+- Job or request completion
+- Service startup and shutdown
+- Scheduled task execution
+
+### warn
+
+Use when something unexpected happens but the system can continue. Warnings often indicate future problems:
+
+- Rate limits nearing capacity
+- Fallback behavior triggered
+- Deprecated feature usage
+- Slow operations exceeding thresholds
+
+### error
+
+Use for failures that need attention. Errors mean something went wrong and likely needs a fix:
+
+- Unhandled exceptions
+- External service failures
+- Data validation errors in critical paths
+- Resource exhaustion (disk, memory, connections)
+
+## Level Filtering
+
+You can set a minimum log level to control which logs are sent. When `minLevel` is set, only logs at that level or higher are transmitted:
+
+| minLevel | Sends |
+|----------|-------|
+| `debug` | debug, info, warn, error |
+| `info` | info, warn, error |
+| `warn` | warn, error |
+| `error` | error only |
+
+This is useful for reducing noise in production while keeping full verbosity in development.
+
+## Dashboard Colors
+
+In the Timberlogs dashboard, each level is color-coded for quick visual scanning:
+
+| Level | Color |
+|-------|-------|
+| `debug` | Gray |
+| `info` | Blue |
+| `warn` | Yellow |
+| `error` | Red |
+
+## Further Reading
+
+- [Structured Logging](/concepts/structured-logging) — how structured data makes logs searchable
+- SDK Logging Methods: [TypeScript](/sdks/typescript#logging-methods) | [Python](/sdks/python#logging-methods) — sending logs with different levels
+- [Viewing Logs](/dashboard/logs) — filtering and searching logs in the dashboard

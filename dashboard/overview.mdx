@@ -1,0 +1,93 @@
+---
+title: Dashboard Overview
+description: The Timberlogs dashboard provides a real-time view of your application logs.
+---
+
+The Timberlogs dashboard at [app.timberlogs.dev](https://app.timberlogs.dev) provides a real-time view of your application logs.
+
+![Dashboard Overview](/images/dashboard/overview.png)
+
+## Getting Started
+
+1. Sign in at [app.timberlogs.dev](https://app.timberlogs.dev)
+2. Create or select an organization
+3. Generate an API key in **Settings > API Keys**
+4. Start sending logs using the [SDK](/sdks/typescript) or [API](/api-reference/ingestion)
+
+## Dashboard Layout
+
+### Navigation
+
+- **Dashboard** - Today's activity, recent logs, and quick actions
+- **AI** - Ask questions about your logs in plain English
+- **Logs** - View and search all logs
+- **Settings** - Manage API keys, alerts, sources, integrations, team, and billing
+
+### Organization Selector
+
+Switch between organizations using the dropdown in the header. Each organization has its own:
+
+- Logs and data
+- API keys
+- Team members
+- Billing plan
+
+## Key Features
+
+### Real-time Log Viewing
+
+- Logs appear within seconds of ingestion
+- Click any log to expand and see full details
+
+### Filtering
+
+Filter logs by:
+- **Level** - debug, info, warn, error
+- **Source** - Application or service name
+- **Environment** - development, staging, production
+- **Time range** - Custom date range with from/to pickers
+
+### Search
+
+Full-text search across log messages:
+- Simple keyword search
+- Phrase matching with quotes
+- Exclude terms with `-`
+- OR queries for alternatives
+
+See [Search documentation](/api-reference/search) for full syntax.
+
+### Log Detail View
+
+Click any log row to expand and see:
+- Full message text
+- Structured data (JSON)
+- Error stack traces
+- All metadata fields
+- Tags
+
+### Flow Tracking
+
+View related logs grouped by flow:
+- See all steps in a multi-step process
+- Track timing between steps
+- Debug user journeys end-to-end
+
+## Data Retention
+
+Log retention depends on your plan:
+
+| Plan | Retention |
+|------|-----------|
+| Free | 7 days |
+| Pro | 30 days |
+| Enterprise | Custom |
+
+Logs are automatically deleted after the retention period.
+
+## Next Steps
+
+- [AI Log Assistant](/dashboard/ai-assistant)
+- [View and filter logs](/dashboard/logs)
+- [Track flows](/dashboard/flows)
+- [Configure the SDK](/sdks/configuration)
