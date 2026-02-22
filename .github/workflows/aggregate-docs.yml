@@ -12,12 +12,14 @@ on:
 jobs:
   aggregate-docs:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
       - uses: mintlify/multirepo-action@v0.16
         with:
-          token: ${{ secrets.DOCS_PUSH_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           target-branch: docs
           repos: |
             - owner: enaboapps
