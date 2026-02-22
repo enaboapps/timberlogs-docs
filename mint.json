@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "quill",
-  "name": "Timberlogs",
+  "name": "Timberlogs Docs",
   "colors": {
     "primary": "#22c55e",
     "dark": "#16a34a",
