@@ -16,16 +16,34 @@
     "style": "default"
   },
   "tabs": [
-    { "name": "Concepts", "url": "concepts" },
-    { "name": "SDKs", "url": "sdks" },
-    { "name": "CLI", "url": "cli" },
-    { "name": "API Reference", "url": "api-reference" },
-    { "name": "Dashboard", "url": "dashboard" }
+    {
+      "name": "Concepts",
+      "url": "concepts"
+    },
+    {
+      "name": "SDKs",
+      "url": "sdks"
+    },
+    {
+      "name": "CLI",
+      "url": "cli"
+    },
+    {
+      "name": "API Reference",
+      "url": "api-reference"
+    },
+    {
+      "name": "Dashboard",
+      "url": "dashboard"
+    }
   ],
   "navigation": [
     {
       "group": "Getting Started",
-      "pages": ["introduction", "getting-started"]
+      "pages": [
+        "introduction",
+        "getting-started"
+      ]
     },
     {
       "group": "Core Concepts",
@@ -53,6 +71,25 @@
         "dashboard/ai-assistant",
         "dashboard/logs",
         "dashboard/flows"
+      ]
+    },
+    {
+      "group": "SDK Reference",
+      "pages": [
+        "timberlogs-typescript-sdk/sdks/typescript",
+        "timberlogs-typescript-sdk/sdks/configuration"
+      ]
+    },
+    {
+      "group": "SDK Reference",
+      "pages": [
+        "timberlogs-python-sdk/sdks/python"
+      ]
+    },
+    {
+      "group": "CLI",
+      "pages": [
+        "timberlogs-cli/cli/overview"
       ]
     }
   ],

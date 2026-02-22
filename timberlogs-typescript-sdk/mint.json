@@ -1,0 +1,11 @@
+{
+  "navigation": [
+    {
+      "group": "SDK Reference",
+      "pages": [
+        "sdks/typescript",
+        "sdks/configuration"
+      ]
+    }
+  ]
+}

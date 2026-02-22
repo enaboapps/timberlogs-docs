@@ -1,0 +1,10 @@
+{
+  "navigation": [
+    {
+      "group": "SDK Reference",
+      "pages": [
+        "sdks/python"
+      ]
+    }
+  ]
+}
