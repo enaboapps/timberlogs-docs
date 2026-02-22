@@ -1,0 +1,31 @@
+name: Aggregate Mintlify Docs
+
+on:
+  push:
+    branches: [main]
+  repository_dispatch:
+    types: [docs-update]
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  aggregate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: mintlify/multirepo-action@v0.15
+        with:
+          token: ${{ secrets.DOCS_PUSH_TOKEN }}
+          target-branch: docs
+          repos: |
+            - owner: enaboapps
+              repo: timberlogs-typescript-sdk
+              subdirectory: docs
+            - owner: enaboapps
+              repo: timberlogs-python-sdk
+              subdirectory: docs
+            - owner: enaboapps
+              repo: timberlogs-cli
+              subdirectory: docs
