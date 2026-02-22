@@ -12,16 +12,6 @@
     "dark": "/images/logo-dark.svg"
   },
   "favicon": "/images/favicon.svg",
-  "topbar": {
-    "style": "default"
-  },
-  "tabs": [
-    { "name": "Concepts", "url": "concepts" },
-    { "name": "SDKs", "url": "sdks" },
-    { "name": "CLI", "url": "cli" },
-    { "name": "API Reference", "url": "api-reference" },
-    { "name": "Dashboard", "url": "dashboard" }
-  ],
   "navigation": [
     {
       "group": "Getting Started",
@@ -36,7 +26,7 @@
       ]
     },
     {
-      "group": "API",
+      "group": "API Reference",
       "pages": [
         "api-reference/authentication",
         "api-reference/ingestion",
