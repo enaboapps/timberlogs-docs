@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: mintlify/multirepo-action@v0.15
+      - uses: mintlify/multirepo-action@main
         with:
           token: ${{ secrets.DOCS_PUSH_TOKEN }}
           target-branch: docs
