@@ -16,69 +16,46 @@
     "style": "default"
   },
   "tabs": [
-    { "name": "Getting Started", "url": "/" },
     { "name": "Concepts", "url": "concepts" },
     { "name": "SDKs", "url": "sdks" },
     { "name": "CLI", "url": "cli" },
     { "name": "API Reference", "url": "api-reference" },
     { "name": "Dashboard", "url": "dashboard" }
   ],
-  "navigation": {
-    "tabs": [
-      {
-        "tab": "Getting Started",
-        "groups": [
-          {
-            "group": "Getting Started",
-            "pages": ["introduction", "getting-started"]
-          }
-        ]
-      },
-      {
-        "tab": "Concepts",
-        "groups": [
-          {
-            "group": "Core Concepts",
-            "pages": [
-              "concepts/structured-logging",
-              "concepts/log-levels",
-              "concepts/flows"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "API Reference",
-        "groups": [
-          {
-            "group": "API",
-            "pages": [
-              "api-reference/authentication",
-              "api-reference/ingestion",
-              "api-reference/query",
-              "api-reference/search",
-              "api-reference/stats",
-              "api-reference/errors"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Dashboard",
-        "groups": [
-          {
-            "group": "Dashboard",
-            "pages": [
-              "dashboard/overview",
-              "dashboard/ai-assistant",
-              "dashboard/logs",
-              "dashboard/flows"
-            ]
-          }
-        ]
-      }
-    ]
-  },
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": ["introduction", "getting-started"]
+    },
+    {
+      "group": "Core Concepts",
+      "pages": [
+        "concepts/structured-logging",
+        "concepts/log-levels",
+        "concepts/flows"
+      ]
+    },
+    {
+      "group": "API",
+      "pages": [
+        "api-reference/authentication",
+        "api-reference/ingestion",
+        "api-reference/query",
+        "api-reference/search",
+        "api-reference/stats",
+        "api-reference/errors"
+      ]
+    },
+    {
+      "group": "Dashboard",
+      "pages": [
+        "dashboard/overview",
+        "dashboard/ai-assistant",
+        "dashboard/logs",
+        "dashboard/flows"
+      ]
+    }
+  ],
   "topbarLinks": [
     {
       "name": "Dashboard",
