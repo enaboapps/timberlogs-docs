@@ -49,14 +49,14 @@
       ]
     },
     {
-      "group": "SDKs",
+      "group": "TypeScript SDK",
       "pages": [
         "timberlogs-typescript-sdk/sdks/typescript",
         "timberlogs-typescript-sdk/sdks/configuration"
       ]
     },
     {
-      "group": "SDKs",
+      "group": "Python SDK",
       "pages": [
         "timberlogs-python-sdk/sdks/python"
       ]
