@@ -29,5 +29,8 @@ jobs:
               repo: timberlogs-python-sdk
               subdirectory: docs
             - owner: enaboapps
+              repo: timberlogs-rust-sdk
+              subdirectory: docs
+            - owner: enaboapps
               repo: timberlogs-cli
               subdirectory: docs
