@@ -43,6 +43,16 @@ poetry add timberlogs-client
 
 **Requirements:** Python 3.8 or later.
 
+### Rust
+
+```toml Cargo.toml
+[dependencies]
+timberlogs = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+```
+
+**Requirements:** Rust 2021 edition or later. Tokio async runtime.
+
 <Steps>
 
 <Step title="Get Your API Key">
@@ -73,6 +83,18 @@ timber = create_timberlogs(
     environment="production",
     api_key=os.getenv("TIMBER_API_KEY"),
 )
+```
+
+```rust Rust
+use timberlogs::TimberlogsClient;
+use std::env;
+
+let timber = TimberlogsClient::new(timberlogs::TimberlogsConfig {
+    source: "my-app".into(),
+    environment: timberlogs::Environment::Production,
+    api_key: env::var("TIMBER_API_KEY").unwrap(),
+    ..Default::default()
+});
 ```
 </CodeGroup>
 
@@ -127,6 +149,30 @@ try:
 except Exception as e:
     timber.error("Operation failed", e)
 ```
+
+```rust Rust
+use serde_json::json;
+
+// Simple info log
+timber.info("Application started", None);
+
+// Log with data
+timber.info("User signed in", Some(json!({
+    "user_id": "user_123",
+    "email": "user@example.com"
+})));
+
+// Log a warning
+timber.warn("Rate limit approaching", Some(json!({
+    "current": 950,
+    "limit": 1000
+})));
+
+// Log an error
+timber.error("Operation failed", Some(json!({
+    "error": "connection timeout"
+})));
+```
 </CodeGroup>
 
 </Step>
@@ -158,6 +204,14 @@ timber.disconnect()
 # Or use a context manager for automatic cleanup
 with create_timberlogs(...) as timber:
     timber.info("Auto-flushed on exit")
+```
+
+```rust Rust
+// Before shutdown
+timber.flush().await;
+
+// Or use disconnect which flushes automatically
+timber.disconnect().await;
 ```
 </CodeGroup>
 
@@ -235,6 +289,39 @@ def health():
     return {"status": "ok"}
 ```
 
+## Example: Actix Web
+
+```rust
+use actix_web::{web, App, HttpServer, HttpRequest, HttpResponse, middleware};
+use timberlogs::{TimberlogsClient, TimberlogsConfig, Environment};
+use std::env;
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    let timber = TimberlogsClient::new(TimberlogsConfig {
+        source: "api-server".into(),
+        environment: Environment::Production,
+        api_key: env::var("TIMBER_API_KEY").unwrap(),
+        ..Default::default()
+    });
+
+    let timber = web::Data::new(timber);
+
+    HttpServer::new(move || {
+        App::new()
+            .app_data(timber.clone())
+            .route("/health", web::get().to(health))
+    })
+    .bind("0.0.0.0:3000")?
+    .run()
+    .await
+}
+
+async fn health() -> HttpResponse {
+    HttpResponse::Ok().json(serde_json::json!({"status": "ok"}))
+}
+```
+
 ## Query Logs from the Terminal
 
 Install the [Timberlogs CLI](/cli/overview) to search and filter logs without leaving your terminal:
@@ -248,7 +335,7 @@ timberlogs logs --level error --from 1h
 ## Next Steps
 
 - Learn about all [configuration options](/sdks/configuration)
-- Explore the SDK reference: [TypeScript](/sdks/typescript) | [Python](/sdks/python)
+- Explore the SDK reference: [TypeScript](/sdks/typescript) | [Python](/sdks/python) | [Rust](/sdks/rust)
 - Query logs from the terminal with the [CLI](/cli/overview)
 - Track user flows with [Flow Tracking](/concepts/flows)
 
