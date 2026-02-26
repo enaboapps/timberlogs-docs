@@ -63,6 +63,13 @@
       ]
     },
     {
+      "group": "Rust SDK",
+      "pages": [
+        "timberlogs-rust-sdk/sdks/rust",
+        "timberlogs-rust-sdk/sdks/rust-configuration"
+      ]
+    },
+    {
       "group": "CLI",
       "pages": [
         "timberlogs-cli/cli/overview"
