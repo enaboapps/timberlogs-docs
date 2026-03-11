@@ -39,7 +39,7 @@ curl -X POST https://timberlogs-ingest.enaboapps.workers.dev/v1/logs \
 ### Creating API Keys
 
 1. Sign in to [app.timberlogs.dev](https://app.timberlogs.dev)
-2. Select your organization
+2. Select your workspace
 3. Navigate to **Settings > API Keys**
 4. Click **Create API Key**
 5. Store the key securely - it's only shown once
@@ -91,29 +91,29 @@ curl -X POST https://timberlogs-ingest.enaboapps.workers.dev/v1/logs \
 
 ```json
 {
-  "error": "Access denied to organization"
+  "error": "Access denied to workspace"
 }
 ```
 
-**How to resolve:** The API key does not have access to the specified organization. Verify the key belongs to the correct organization.
+**How to resolve:** The API key does not have access to the specified workspace. Verify the key belongs to the correct workspace.
 
 ```json
 {
-  "error": "User has no organization"
+  "error": "User has no workspace"
 }
 ```
 
-**How to resolve:** The account associated with this request has no organization. Create or join an organization in the dashboard.
+**How to resolve:** The account associated with this request has no workspace. Create or join a workspace in the dashboard.
 
 ### 404 Not Found
 
 ```json
 {
-  "error": "Organization not found"
+  "error": "Workspace not found"
 }
 ```
 
-**How to resolve:** The organization ID doesn't exist. Double-check the `organizationId` value in your request.
+**How to resolve:** The workspace ID doesn't exist. Double-check the `workspaceId` value in your request.
 
 ## Best Practices
 

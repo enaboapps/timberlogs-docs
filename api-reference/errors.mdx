@@ -13,10 +13,10 @@ description: A consolidated reference of all error responses across the Timberlo
 | 401 | Invalid API key | All endpoints | Verify the key format (`tb_live_*` / `tb_test_*`) and that it was copied correctly. Generate a new key if needed. |
 | 401 | API key has been revoked | All endpoints | This key has been revoked. Create a new key in **Settings > API Keys**. |
 | 401 | API key has expired | All endpoints | This key has expired. Create a new key in **Settings > API Keys**. |
-| 403 | Access denied to organization | All endpoints | The API key does not have access to the specified organization. Verify the key belongs to the correct org. |
-| 403 | User has no organization | All endpoints | Create or join an organization in the [dashboard](https://app.timberlogs.dev). |
-| 404 | Log not found | [GET /v1/logs/:id](/api-reference/query) | The log ID doesn't exist or belongs to a different organization. Verify the ID and API key. |
-| 404 | Organization not found | All endpoints | Double-check the `organizationId` value in your request. |
+| 403 | Access denied to workspace | All endpoints | The API key does not have access to the specified workspace. Verify the key belongs to the correct workspace. |
+| 403 | User has no workspace | All endpoints | Create or join a workspace in the [dashboard](https://app.timberlogs.dev). |
+| 404 | Log not found | [GET /v1/logs/:id](/api-reference/query) | The log ID doesn't exist or belongs to a different workspace. Verify the ID and API key. |
+| 404 | Workspace not found | All endpoints | Double-check the `workspaceId` value in your request. |
 | 429 | Rate limit exceeded | [POST /v1/logs](/api-reference/ingestion) | Wait `retryAfter` seconds before retrying. Batch logs into fewer requests or upgrade your plan. |
 | 500 | Search failed | [GET /v1/logs/search](/api-reference/search) | Retry the request. If it persists, simplify the query or reduce search fields. |
 
